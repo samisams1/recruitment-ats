@@ -1,0 +1,33 @@
+name: Continuous Integration Architecture Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate-and-build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Project Codebases
+      uses: actions/checkout@v3
+
+    - name: Setup Node.js Runtime Platform
+      uses: actions/setup-node@v3
+      with:
+        node-version: 20
+        cache: 'npm'
+        cache-dependency-path: './backend/package.json'
+
+    - name: Install Architecture System Core Dependencies
+      run: |
+        cd backend
+        npm install
+
+    - name: Verify Typescript Application compilation
+      run: |
+        cd backend
+        npm run prisma:generate
+        npm run build
