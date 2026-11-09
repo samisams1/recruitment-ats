@@ -1,5 +1,5 @@
 datasource db {
-  provider = "postgresql"
+  provider = "postgresql" // Verified for PostgreSQL
   url      = env("DATABASE_URL")
 }
 
@@ -7,19 +7,41 @@ generator client {
   provider = "prisma-client-js"
 }
 
-enum Role {
-  ADMIN
-  RECRUITER
-  CANDIDATE
+enum JobStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
 }
 
+model Job {
+  id           String        @id @default(uuid()) // standard secure UUID for Postgres
+  title        String
+  description  String
+  companyName  String
+  location     String
+  salaryRange  String?
+  status       JobStatus     @default(DRAFT)
+  tags         String[]      // PostgreSQL natively supports text arrays!
+  recruiterId  String        
+  recruiter    User          @relation(fields: [recruiterId], references: [id], onDelete: Cascade)
+  applications Application[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([tags]) 
+}
+
+model Application {
+  id          String   @id @default(uuid()) // standard secure UUID for Postgres
+  jobId       String   
+  candidateId String   
+  status      String   @default("APPLIED") 
+  job         Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+}
+
+// Make sure your User model also matches the ID format
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
-  firstName String
-  lastName  String
-  role      Role     @default(CANDIDATE)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id   String @id @default(uuid())
+  jobs Job[]
 }
